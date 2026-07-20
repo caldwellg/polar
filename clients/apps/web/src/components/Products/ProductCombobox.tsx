@@ -98,7 +98,7 @@ export const ProductCombobox = ({
   const [query, setQuery] = useState('')
   const normalizedQuery = query.trim()
 
-  const { data: queriedProducts, isLoading } = useProducts(organizationId, {
+  const { data: queriedProducts, isFetching } = useProducts(organizationId, {
     is_recurring: true,
     ...(normalizedQuery ? { query: normalizedQuery } : {}),
     sorting: ['price_amount'],
@@ -194,7 +194,7 @@ export const ProductCombobox = ({
             onValueChange={setQuery}
           />
           <CommandList className="dark:[scrollbar-color:var(--color-polar-500)_transparent]">
-            {isLoading ? (
+            {isFetching ? (
               <Box
                 alignItems="center"
                 justifyContent="center"
