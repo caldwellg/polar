@@ -1,9 +1,8 @@
 'use client'
 
-import { useProducts } from '@/hooks/queries'
+import { useProduct } from '@/hooks/queries'
 import { useUpdateSubscription } from '@/hooks/queries/subscriptions'
 import { setValidationErrors } from '@/utils/api/errors'
-import { hasLegacyRecurringPrices } from '@/utils/product'
 import { useTrialChangeOutcome } from '@/utils/trial-change'
 import { isValidationError, schemas } from '@polar-sh/client'
 import { Box } from '@polar-sh/orbit/Box'
@@ -45,45 +44,15 @@ export const UpdateSubscriptionProductForm = ({
     },
   })
   const { control, handleSubmit, setError, watch } = form
-  const { data: allProducts, isLoading: isLoadingProducts } = useProducts(
-    subscription.product.organization_id,
-    {
-      is_recurring: true,
-      limit: 100,
-      sorting: ['price_amount'],
-    },
-  )
 
-  const activePriceIds = useMemo(
+  const currentPriceIds = useMemo(
     () => subscription.prices.map(({ id }) => id),
     [subscription],
   )
-  const products = useMemo(() => {
-    if (!allProducts) return []
-
-    return allProducts.items
-      .filter((product) => !hasLegacyRecurringPrices(product))
-      .filter((product) => {
-        if (subscription.product_id !== product.id) {
-          return true
-        }
-
-        const productPriceIds = product.prices.map(({ id }) => id)
-
-        if (productPriceIds.length !== activePriceIds.length) {
-          return true
-        }
-        return !productPriceIds.every((id) => activePriceIds.includes(id))
-      })
-  }, [allProducts, activePriceIds, subscription])
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const selectedProductId = watch('product_id')
-  const selectedProduct = useMemo(
-    () => products.find((product) => product.id === selectedProductId),
-    [products, selectedProductId],
-  )
-
+  const { data: selectedProduct } = useProduct(selectedProductId)
   const trialOutcome = useTrialChangeOutcome(subscription, selectedProduct)
 
   const onSubmit = useCallback(
@@ -154,12 +123,12 @@ export const UpdateSubscriptionProductForm = ({
                 </Box>
                 <FormControl>
                   <SubscriptionProductPicker
-                    products={products}
+                    organizationId={subscription.product.organization_id}
                     value={field.value ?? undefined}
                     onChange={field.onChange}
                     currency={subscription.currency}
                     currentProductId={subscription.product_id}
-                    isLoading={isLoadingProducts}
+                    currentPriceIds={currentPriceIds}
                   />
                 </FormControl>
                 <FormMessage />

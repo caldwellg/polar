@@ -1,5 +1,7 @@
 'use client'
 
+import { useProduct, useProducts } from '@/hooks/queries'
+import { hasLegacyRecurringPrices } from '@/utils/product'
 import { schemas } from '@polar-sh/client'
 import { Box } from '@polar-sh/orbit/Box'
 import { Text } from '@polar-sh/orbit'
@@ -68,36 +70,80 @@ const SubscriptionProductOption = ({
   )
 }
 
+const hasNewPricing = (
+  product: schemas['Product'],
+  currentPriceIds: string[],
+) => {
+  const productPriceIds = product.prices.map(({ id }) => id)
+  if (productPriceIds.length !== currentPriceIds.length) return true
+  return !productPriceIds.every((id) => currentPriceIds.includes(id))
+}
+
 export const SubscriptionProductPicker = ({
-  products,
+  organizationId,
   value,
   onChange,
   currency,
   currentProductId,
-  isLoading = false,
+  currentPriceIds,
 }: {
-  products: schemas['Product'][]
+  organizationId: string
   value: string | undefined
   onChange: (productId: string) => void
   currency: string
   currentProductId: string
-  isLoading?: boolean
+  currentPriceIds: string[]
 }) => {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const normalizedQuery = query.trim()
+
+  const { data: queriedProducts, isLoading } = useProducts(organizationId, {
+    is_recurring: true,
+    ...(normalizedQuery ? { query: normalizedQuery } : {}),
+    sorting: ['price_amount'],
+    limit: 100,
+  })
+  const { data: fetchedSelectedProduct } = useProduct(value)
+  const { data: currentProduct } = useProduct(currentProductId)
+
+  const products = useMemo(() => {
+    let items = (queriedProducts?.items ?? []).filter(
+      (product) => !hasLegacyRecurringPrices(product),
+    )
+
+    items = items.filter(
+      (product) =>
+        product.id !== currentProductId ||
+        hasNewPricing(product, currentPriceIds),
+    )
+
+    if (
+      !normalizedQuery &&
+      currentProduct &&
+      !hasLegacyRecurringPrices(currentProduct) &&
+      hasNewPricing(currentProduct, currentPriceIds) &&
+      !items.some((product) => product.id === currentProduct.id)
+    ) {
+      items = [currentProduct, ...items]
+    }
+
+    return items
+  }, [
+    queriedProducts,
+    normalizedQuery,
+    currentProduct,
+    currentProductId,
+    currentPriceIds,
+  ])
 
   const selectedProduct = useMemo(
-    () => products.find((product) => product.id === value),
-    [products, value],
+    () =>
+      products.find((product) => product.id === value) ??
+      fetchedSelectedProduct ??
+      undefined,
+    [products, value, fetchedSelectedProduct],
   )
-
-  const filteredProducts = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    if (!normalizedQuery) return products
-    return products.filter((product) =>
-      product.name.toLowerCase().includes(normalizedQuery),
-    )
-  }, [products, query])
 
   return (
     <Popover
@@ -156,11 +202,11 @@ export const SubscriptionProductPicker = ({
               >
                 <Loader2 className="h-4 w-4 animate-spin opacity-50" />
               </Box>
-            ) : filteredProducts.length === 0 ? (
+            ) : products.length === 0 ? (
               <CommandEmpty>No products found</CommandEmpty>
             ) : (
               <CommandGroup>
-                {filteredProducts.map((product) => {
+                {products.map((product) => {
                   const isSelected = value === product.id
 
                   return (
