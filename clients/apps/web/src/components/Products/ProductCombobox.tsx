@@ -22,9 +22,9 @@ import {
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
-import ProductPriceLabel from '../Products/ProductPriceLabel'
+import ProductPriceLabel from './ProductPriceLabel'
 
-const SubscriptionProductOption = ({
+const ProductComboboxOption = ({
   product,
   currency,
   showNewPricing,
@@ -79,7 +79,7 @@ const hasNewPricing = (
   return !productPriceIds.every((id) => currentPriceIds.includes(id))
 }
 
-export const SubscriptionProductPicker = ({
+export const ProductCombobox = ({
   organizationId,
   value,
   onChange,
@@ -165,7 +165,7 @@ export const SubscriptionProductPicker = ({
         >
           <span className="flex min-w-0 flex-1 items-center text-left">
             {selectedProduct ? (
-              <SubscriptionProductOption
+              <ProductComboboxOption
                 product={selectedProduct}
                 currency={currency}
                 layout="trigger"
@@ -221,7 +221,7 @@ export const SubscriptionProductPicker = ({
                       className="data-[selected=true]:text-accent-foreground items-center rounded-md text-gray-950 dark:text-white"
                     >
                       <span className="min-w-0 flex-1">
-                        <SubscriptionProductOption
+                        <ProductComboboxOption
                           product={product}
                           currency={currency}
                           showNewPricing={product.id === currentProductId}

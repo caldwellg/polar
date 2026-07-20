@@ -20,7 +20,7 @@ import { useForm } from 'react-hook-form'
 import { ProrationBehavior } from '../Settings/ProrationBehavior'
 import AmountLabel from '../Shared/AmountLabel'
 import { toast } from '../Toast/use-toast'
-import { SubscriptionProductPicker } from './SubscriptionProductPicker'
+import { ProductCombobox } from '../Products/ProductCombobox'
 import { subscriptionUpdateValidationDiscriminators } from './utils'
 import { UpdateSubscriptionProductWarning } from './UpdateSubscriptionProductWarning'
 
@@ -122,7 +122,7 @@ export const UpdateSubscriptionProductForm = ({
                   </Box>
                 </Box>
                 <FormControl>
-                  <SubscriptionProductPicker
+                  <ProductCombobox
                     organizationId={subscription.product.organization_id}
                     value={field.value ?? undefined}
                     onChange={field.onChange}
