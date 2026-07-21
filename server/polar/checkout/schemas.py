@@ -126,6 +126,18 @@ EmbedOrigin = Annotated[
     ),
 ]
 
+_payment_method_description = (
+    "Payment method type selected by the customer in the checkout form, "
+    "e.g. `card`, `apple_pay` or `upi`. "
+    "Some payment methods require a full billing address: keeping this value "
+    "in sync allows `billing_address_fields` to reflect the fields to display."
+)
+PaymentMethodInput = Annotated[
+    str,
+    Field(pattern="^[a-z0-9_]+$", description=_payment_method_description),
+    MaxLen(64),
+]
+
 _external_customer_id_description = (
     "ID of the customer in your system. "
     "If a matching customer exists on Polar, the resulting order "
@@ -375,6 +387,7 @@ class CheckoutUpdateBase(CustomFieldDataInputMixin, Schema):
     customer_billing_address: CustomerBillingAddressInput | None = None
     customer_tax_id: Annotated[str | None, EmptyStrToNoneValidator] = None
     locale: Locale | None = None
+    payment_method: PaymentMethodInput | None = None
 
 
 class CheckoutUpdate(
@@ -595,6 +608,7 @@ class CheckoutBase(CustomFieldDataOutputMixin, TimestampedSchema, IDSchema):
         validation_alias=AliasChoices("customer_tax_id_number", "customer_tax_id")
     )
     locale: str | None = None
+    payment_method: str | None = Field(description=_payment_method_description)
 
     payment_processor_metadata: dict[str, str]
 
