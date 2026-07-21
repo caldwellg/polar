@@ -8,6 +8,7 @@ from pydantic import (
     Discriminator,
     Field,
     IPvAnyAddress,
+    StringConstraints,
     Tag,
     computed_field,
     field_validator,
@@ -134,8 +135,8 @@ _payment_method_description = (
 )
 PaymentMethodInput = Annotated[
     str,
-    Field(pattern="^[a-z0-9_]+$", description=_payment_method_description),
-    MaxLen(64),
+    StringConstraints(pattern=r"^[a-z0-9_]+$", max_length=64),
+    Field(description=_payment_method_description),
 ]
 
 _external_customer_id_description = (
