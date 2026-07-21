@@ -135,8 +135,9 @@ _payment_method_description = (
 )
 PaymentMethodInput = Annotated[
     str,
-    StringConstraints(pattern=r"^[a-z0-9_]+$", max_length=64),
+    StringConstraints(to_lower=True, max_length=64),
     Field(description=_payment_method_description),
+    EmptyStrToNoneValidator,
 ]
 
 _external_customer_id_description = (
