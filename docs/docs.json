@@ -144,6 +144,7 @@
                   "features/integrations/fernand",
                   "features/integrations/framer",
                   "features/integrations/paritydeals",
+                  "features/integrations/rekomi",
                   "features/integrations/raycast",
                   "features/integrations/zapier"
                 ]

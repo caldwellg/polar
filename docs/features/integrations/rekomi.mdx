@@ -1,0 +1,106 @@
+---
+title: "Rekomi Affiliates with Polar"
+sidebarTitle: "Rekomi (Affiliates)"
+description: "Run an affiliate program for your Polar products with Rekomi. One pasted token connects the two, and affiliate sales, renewals, and refunds track automatically."
+---
+
+This guide explains how to connect
+[Rekomi](https://rekomi.com)'s affiliate tracking platform to your Polar
+account so affiliate-driven sales are tracked, commissioned, and paid out
+automatically.
+
+## What is Rekomi?
+
+[Rekomi](https://rekomi.com) is an affiliate tracking and management platform with a native Polar integration. With Rekomi, you can:
+
+- Launch an affiliate program for your Polar products in minutes
+- Track clicks, sales, subscription renewals, and refunds automatically
+- Set flexible commission structures (percentage, flat, recurring, tiered)
+- Pay your affiliates directly through Rekomi, in 150+ countries, tax forms included
+
+## Integration Steps
+
+### 1. Create an Organization Access Token
+
+Rekomi uses a single Organization Access Token to set up and health-check the connection:
+
+1. Log in to your **Polar Dashboard**
+2. Navigate to [**Settings**](https://polar.sh/to/dashboard/settings) and find the **Developers** section
+3. Click **New token** and name it (e.g., "Rekomi Integration")
+4. Set expiration to **No expiration**, so the connection never lapses on a timer
+5. Enable these two scopes, which are all Rekomi needs:
+   - `organizations:read`
+   - `webhooks:write`
+6. Click **Create token** and copy the generated token
+
+The token is only used to create and health-check the webhook endpoint. Your sales arrive through the signed webhook itself, and Rekomi never touches products, prices, or payouts in your Polar account.
+
+### 2. Connect in Rekomi
+
+In Rekomi, open **Setup → Connect payment processor**, choose Polar, and paste the token. Rekomi validates it live, resolves your Polar organization, and creates the webhook endpoint in your account itself, subscribed to exactly the events it needs (paid orders, subscription lifecycle, refunds). Polar generates the webhook signing secret when the endpoint is created, and Rekomi stores it encrypted and verifies it on every delivery.
+
+That is the whole connection: there is no webhook form to fill in and nothing to paste back into Polar.
+
+### 3. Add the Rekomi Tracking Script to Your Website
+
+Add the Rekomi script to the `<head>` tag of your marketing site so affiliate clicks are captured:
+
+```html
+<!-- Place in <head> tag -->
+<script
+  async
+  src="https://api.rekomi.com/api/v1/r/loader.js"
+  data-program-id="YOUR_PROGRAM_ID">
+</script>
+```
+
+Replace `YOUR_PROGRAM_ID` with the program ID shown in your Rekomi dashboard under **Setup → Install**, where the snippet is provided with the ID already filled in.
+
+### 4. Pass the Referral into Checkout
+
+Polar hosts checkout on its own domain, so the referral travels into the order as metadata. There are two paths, and one of them is fully automatic:
+
+**Checkout links and embeds: nothing to add.** The Rekomi script appends the visitor's referral to `buy.polar.sh` and `polar.sh/checkout` links on your pages as a `reference_id` query parameter, which Polar copies into the order's metadata. If a link already carries a `reference_id`, Rekomi leaves your value alone.
+
+**Server-created checkouts via the API: one small addition.** Read the referral on your frontend with `window.Rekomi.getReferral()`, send it to your backend, and stamp it as `metadata.rekomi_ref`:
+
+```javascript
+// Get the referral captured by the Rekomi script
+const ref = window.Rekomi?.getReferral?.();
+
+// Create the checkout session with Polar
+const checkout = await polar.checkouts.create({
+  products: ["your_product_id"],
+  success_url: "https://your-app.com/success",
+  metadata: ref ? { rekomi_ref: ref } : {},
+});
+
+// Redirect to checkout
+window.location.href = checkout.url;
+```
+
+## How It Works
+
+1. A visitor clicks an affiliate link and lands on your site, where the Rekomi script stores the referral in a first-party cookie
+2. At checkout the referral rides into Polar as metadata (`rekomi_ref` from the API, or `reference_id` on checkout links)
+3. When the order is paid, Polar delivers a signed `order.paid` webhook to the endpoint Rekomi created
+4. Rekomi verifies the signature, matches the referral to the affiliate, and records the commission on the pre-tax net amount (Polar is the Merchant of Record, so affiliates never earn on tax)
+5. Subscription renewals arrive the same way and record recurring commissions with no extra work; refunds and chargebacks claw commissions back automatically
+
+Trials fire no commission until the first real charge, because Rekomi keys on orders that were actually paid.
+
+## Benefits of the Integration
+
+- **One-paste setup**: Rekomi creates and manages the webhook endpoint itself; there is no manual webhook configuration
+- **Minimal access**: the token needs just two scopes, and money always arrives through the signed webhook, never through the API
+- **Accurate commissions**: calculated on the paid, pre-tax net amount, with per-refund clawbacks that stay symmetric with the original commission
+- **Built-in payouts**: Rekomi pays your affiliates for you, in 150+ countries, with tax forms handled
+
+## Getting Help
+
+Full setup and troubleshooting guide: [Install on Polar](https://rekomi.com/docs/brands/install/polar)
+
+If you need assistance with your Rekomi integration, contact Rekomi's support team:
+
+- Email: support@rekomi.com
+- Live chat: Available directly in the Rekomi dashboard
